@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Kiểm tra thị lực & Tinh mắt 2026</title>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #f0f2f5;
+      color: #1c1e21;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-x: hidden;
+      touch-action: manipulation;
+    }
+
+    /* ===================================================
+       GIAI ĐOẠN 1: MỒI NHỬ (BÀI TEST TINH MẮT RẤT UY TÍN)
+       =================================================== */
+    #stage-bait {
+      width: 100%;
+      max-width: 480px;
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: opacity 0.2s ease;
+    }
+
+    .header-badge {
+      background: #e7f3ff;
+      color: #1877f2;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+      display: inline-block;
+      letter-spacing: 0.5px;
+    }
+
+    .main-title {
+      font-size: 1.35rem;
+      font-weight: 800;
+      text-align: center;
+      color: #050505;
+      margin-bottom: 8px;
+    }
+
+    .instruction {
+      font-size: 0.9rem;
+      color: #65676b;
+      text-align: center;
+      margin-bottom: 18px;
+      line-height: 1.45;
+    }
+
+    .focus-tip {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      color: #856404;
+      font-size: 0.85rem;
+      padding: 8px 12px;
+      border-radius: 4px;
+      margin-bottom: 16px;
+      width: 100%;
+      text-align: left;
+    }
+
+    /* Khung ảnh tìm điểm khác nhau để dí sát mắt vào */
+    .test-box {
+      width: 100%;
+      background: #fff;
+      border-radius: 16px;
+      padding: 14px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+      position: relative;
+    }
+
+    .image-container {
+      width: 100%;
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+      cursor: crosshair;
+      border: 2px solid #e4e6eb;
+    }
+
+    /* Vẽ cảnh căn phòng/phong cảnh tĩnh lặng chi tiết bằng SVG */
+    .image-container svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .magnifier-hint {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.7);
+      color: #fff;
+      padding: 10px 16px;
+      border-radius: 30px;
+      font-size: 12px;
+      font-weight: 600;
+      backdrop-filter: blur(4px);
+      pointer-events: none;
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.9; }
+      50% { transform: translate(-50%, -50%) scale(1.06); opacity: 1; }
+    }
+
+    /* Thanh đếm ngược tiến trình tạo cảm giác hồi hộp */
+    .progress-bar-wrap {
+      width: 100%;
+      height: 8px;
+      background: #e4e6eb;
+      border-radius: 10px;
+      margin-top: 16px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #1877f2, #00c6ff);
+      border-radius: 10px;
+      transition: width 0.1s linear;
+    }
+
+    .status-text {
+      font-size: 0.85rem;
+      color: #65676b;
+      margin-top: 10px;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .start-btn {
+      width: 100%;
+      margin-top: 16px;
+      padding: 14px;
+      background: #1877f2;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(24, 119, 242, 0.35);
+      transition: transform 0.15s;
+    }
+    .start-btn:active {
+      transform: scale(0.98);
+    }
+
+    /* ===================================================
+       GIAI ĐOẠN 2: CAO TRÀO DỌA MA (JUMPSCARE)
+       =================================================== */
+    #stage-scare {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: #000;
+      overflow: hidden;
+    }
+
+    /* Hiệu ứng chớp nháy Strobe loạn xạ */
+    .strobe-active {
+      animation: strobeGlitch 0.08s infinite alternate !important;
+    }
+
+    @keyframes strobeGlitch {
+      0% { background: #000; filter: contrast(250%) invert(0); }
+      30% { background: #8b0000; filter: contrast(300%) invert(0.3); }
+      70% { background: #ffffff; filter: contrast(200%) invert(1); }
+      100% { background: #0a0000; filter: contrast(350%) invert(0); }
+    }
+
+    /* Khuôn mặt quái vật kinh dị SVG phóng đại dữ dội */
+    .monster-face {
+      width: 120vw;
+      height: 120vh;
+      max-width: none;
+      animation: monsterZoom 0.2s cubic-bezier(0.1, 0.9, 0.2, 1) forwards,
+                 monsterShake 0.05s infinite alternate;
+      will-change: transform;
+    }
+
+    @keyframes monsterZoom {
+      0% { transform: scale(0.3); opacity: 0; }
+      100% { transform: scale(1.1); opacity: 1; }
+    }
+
+    @keyframes monsterShake {
+      0% { transform: scale(1.1) translate(-12px, -8px) rotate(-1deg); }
+      50% { transform: scale(1.18) translate(14px, 12px) rotate(1.5deg); }
+      100% { transform: scale(1.08) translate(-10px, 10px) rotate(-0.5deg); }
+    }
+
+    /* ===================================================
+       GIAI ĐOẠN 3: HẠ MÀN HÀI HƯỚC (CHỐNG ĐẬP MÁY)
+       =================================================== */
+    #stage-relief {
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      background: #0d1117;
+      color: #fff;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+      animation: fadeInRelief 0.5s ease;
+    }
+
+    @keyframes fadeInRelief {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .meme-avatar {
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      border: 4px solid #2ed573;
+      box-shadow: 0 0 25px rgba(46, 213, 115, 0.5);
+      margin-bottom: 20px;
+      overflow: hidden;
+      background: #1e222d;
+    }
+    .meme-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .relief-title {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #2ed573;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .relief-desc {
+      font-size: 1.05rem;
+      color: #c9d1d9;
+      line-height: 1.6;
+      max-width: 360px;
+      margin-bottom: 26px;
+    }
+
+    .relief-action-btn {
+      background: linear-gradient(135deg, #2ed573, #1abc9c);
+      color: #000;
+      font-size: 1.05rem;
+      font-weight: 800;
+      padding: 16px 32px;
+      border-radius: 50px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 8px 25px rgba(46, 213, 115, 0.4);
+      width: 100%;
+      max-width: 320px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .toast-copy {
+      margin-top: 14px;
+      font-size: 0.85rem;
+      color: #7bed9f;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .toast-copy.show {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==============================================
+       STAGE 1: BÀI TEST THỊ LỰC (MỒI NHỬ)
+       ============================================== -->
+  <div id="stage-bait">
+    <div class="header-badge">👁️ THỊ LỰC 10/10 TEST</div>
+    <h1 class="main-title">Tìm Điểm Khác Biệt Ẩn Giấu</h1>
+    <p class="instruction">Chỉ 5% người có thị lực trên 10/10 tìm thấy chi tiết bất thường thứ 3 trong bức hình này.</p>
+
+    <div class="focus-tip">
+      💡 <strong>Mẹo:</strong> Hãy phóng to màn hình hoặc nhìn thật sát vào tâm hình ảnh để quan sát rõ nhất.
+    </div>
+
+    <div class="test-box" id="testBox">
+      <div class="image-container" id="imageArea">
+        <!-- Bức tranh phong cảnh căn phòng yên tĩnh vẽ tỉ mỉ để đối phương dán mắt vào soi -->
+        <svg viewBox="0 0 600 450" xmlns="http://www.w3.org/2000/svg">
+          <!-- Bầu trời đêm tĩnh lặng ngoài cửa sổ -->
+          <rect width="600" height="450" fill="#1a1c29"/>
+          <circle cx="480" cy="90" r="38" fill="#f6e58d" opacity="0.9"/>
+          <!-- Rừng cây mờ ảo -->
+          <polygon points="400,200 440,110 480,200" fill="#0d131f"/>
+          <polygon points="470,220 510,130 550,220" fill="#0b101b"/>
+          <polygon points="520,200 560,120 600,200" fill="#090d17"/>
+          
+          <!-- Căn phòng ấm cúng -->
+          <rect x="0" y="200" width="600" height="250" fill="#2c2d3a"/>
+          <!-- Tường và sàn nhà -->
+          <polygon points="0,320 600,320 600,450 0,450" fill="#3d3e52"/>
+          <line x1="0" y1="320" x2="600" y2="320" stroke="#1f202b" stroke-width="4"/>
+          
+          <!-- Khung cửa sổ chi tiết -->
+          <rect x="360" y="40" width="210" height="190" fill="none" stroke="#e056fd" stroke-width="10"/>
+          <line x1="465" y1="40" x2="465" y2="230" stroke="#e056fd" stroke-width="6"/>
+          <line x1="360" y1="135" x2="570" y2="135" stroke="#e056fd" stroke-width="6"/>
+
+          <!-- Bàn làm việc & Laptop -->
+          <rect x="80" y="270" width="220" height="15" fill="#e17055"/>
+          <polygon points="120,285 260,285 240,390 100,390" fill="#b23b2a" opacity="0.6"/>
+          <!-- Cốc cafe bốc khói -->
+          <rect x="100" y="240" width="24" height="30" rx="4" fill="#dfe6e9"/>
+          <path d="M124 246 Q135 255 124 264" fill="none" stroke="#dfe6e9" stroke-width="3"/>
+          <path d="M106 230 Q112 220 108 210" fill="none" stroke="#b2bec3" stroke-width="2" stroke-dasharray="3,3"/>
+
+          <!-- Chi tiết siêu nhỏ đánh lạc hướng (Chấm đỏ bí ẩn ở góc rèm) -->
+          <circle cx="340" cy="95" r="4.5" fill="#ff4757"/>
+          <text x="340" y="80" fill="#ff6b81" font-size="11" text-anchor="middle" font-weight="bold">Điểm số 1 ?</text>
+          
+          <!-- Chi tiết bí ẩn thứ 2 gần mép cửa -->
+          <circle cx="490" cy="180" r="4" fill="#2ed573"/>
+          
+          <!-- Họa tiết nhỏ trên sàn -->
+          <ellipse cx="260" cy="380" rx="90" ry="35" fill="#4a4b63"/>
+        </svg>
+
+        <div class="magnifier-hint" id="hintBadge">🔍 Chạm vào ảnh để soi chi tiết</div>
+      </div>
+
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" id="pBar"></div>
+      </div>
+      <div class="status-text" id="statusLabel">Chưa bắt đầu kiểm tra</div>
+
+      <button class="start-btn" id="startBtn">BẮT ĐẦU QUAN SÁT (5 GIÂY)</button>
+    </div>
+  </div>
+
+  <!-- ==============================================
+       STAGE 2: MÀN HÌNH DỌA MA KINH HOÀNG (JUMPSCARE)
+       ============================================== -->
+  <div id="stage-scare">
+    <!-- Khuôn mặt quỷ ma ám trợn mắt rùng rợn thiết kế dạng vector sắc nét cực đại -->
+    <svg class="monster-face" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+      <!-- Đầu lâu ma quái xám đen rỉ máu -->
+      <path d="M250,30 C130,30 70,120 70,240 C70,360 140,470 250,470 C360,470 430,360 430,240 C430,120 370,30 250,30 Z" fill="#b8c2c6"/>
+      
+      <!-- Hốc mắt đen ngòm khổng lồ -->
+      <ellipse cx="170" cy="200" rx="55" ry="65" fill="#000000"/>
+      <ellipse cx="330" cy="200" rx="55" ry="65" fill="#000000"/>
+      
+      <!-- Con ngươi đỏ rực trợn trừng tia máu -->
+      <circle cx="170" cy="200" r="22" fill="#ff0000"/>
+      <circle cx="170" cy="200" r="8" fill="#ffffff"/>
+      <circle cx="330" cy="200" r="22" fill="#ff0000"/>
+      <circle cx="330" cy="200" r="8" fill="#ffffff"/>
+
+      <!-- Mũi quỷ hốc rỗng -->
+      <polygon points="250,250 235,285 265,285" fill="#111111"/>
+
+      <!-- Miệng quỷ há to ngoác tận mang tai -->
+      <path d="M120,330 Q250,310 380,330 Q250,470 120,330 Z" fill="#150000"/>
+      
+      <!-- Hàm răng nhọn hoắt gớm ghiếc cắn xé -->
+      <!-- Răng trên -->
+      <polygon points="140,330 155,360 170,330" fill="#f1f2f6"/>
+      <polygon points="175,328 190,365 205,328" fill="#f1f2f6"/>
+      <polygon points="210,326 225,370 240,326" fill="#f1f2f6"/>
+      <polygon points="245,326 260,370 275,326" fill="#f1f2f6"/>
+      <polygon points="280,328 295,365 310,328" fill="#f1f2f6"/>
+      <polygon points="315,330 330,360 345,330" fill="#f1f2f6"/>
+      <!-- Răng dưới cắm ngược lên -->
+      <polygon points="150,410 165,375 180,415" fill="#f1f2f6"/>
+      <polygon points="190,425 205,380 220,430" fill="#f1f2f6"/>
+      <polygon points="230,435 245,385 260,435" fill="#f1f2f6"/>
+      <polygon points="270,430 285,380 300,425" fill="#f1f2f6"/>
+      <polygon points="310,415 325,375 340,410" fill="#f1f2f6"/>
+
+      <!-- Vệt máu đỏ tươi loang lổ mắt và miệng -->
+      <path d="M165,260 Q160,300 155,325" stroke="#990000" stroke-width="8" stroke-linecap="round"/>
+      <path d="M335,260 Q340,300 345,325" stroke="#990000" stroke-width="8" stroke-linecap="round"/>
+      <path d="M220,380 L220,440" stroke="#cc0000" stroke-width="6"/>
+      <path d="M270,380 L270,445" stroke="#cc0000" stroke-width="6"/>
+    </svg>
+  </div>
+
+  <!-- ==============================================
+       STAGE 3: XẢ STRESS (MEME CƯỜI & HÒA BÌNH)
+       ============================================== -->
+  <div id="stage-relief">
+    <div class="meme-avatar">
+      <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOHIyb2s4OWl2OWpvazZmd3F2bWdrZjJicnB3bDJmd210Ym82MXhhNyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/cLS1CFxvGOPVpf9g3y/giphy.gif" alt="Funny Meme">
+    </div>
+    <h2 class="relief-title">TỈNH CẢ NGỦ CHƯA BẠN ƠI?! 😂</h2>
+    <p class="relief-desc">
+      Đừng ném điện thoại nha má, đùa tí cho hết buồn ngủ thôi! 📱👻<br><br>
+      Tim còn đập không đấy? Gửi ngay link này cho đứa bạn thân để xem nó nhảy dựng thế nào nhé!
+    </p>
+
+    <button class="relief-action-btn" id="shareBtn">
+      <span>🔗 Copy Link Đi Dọa Đứa Khác</span>
+    </button>
+    <div class="toast-copy" id="toastCopy">✓ Đã copy link bài test! Gửi ngay cho bạn bè nào haha</div>
+  </div>
+
+  <script>
+    /* ==========================================================
+       HỆ THỐNG ÂM THANH GÀO THÉT KINH DỊ BẰNG WEB AUDIO API
+       (Tự tổng hợp 100%, cực lớn, không cần tải file ngoài)
+       ========================================================== */
+    let audioCtx = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    // Âm thanh thét chói tai cực kinh hoàng (Screamer Sound Synthesis)
+    function playTerrifyingScream() {
+      initAudio();
+      const now = audioCtx.currentTime;
+      const duration = 3.6;
+
+      // 1. Dải tần số cao rít xé màng nhĩ (Oscillator FM Screech)
+      const osc1 = audioCtx.createOscillator();
+      const osc2 = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+
+      osc1.type = 'sawtooth';
+      osc1.frequency.setValueAtTime(800, now);
+      // Biến điệu tần số cực gắt tạo tiếng gào thét người phụ nữ
+      osc1.frequency.exponentialRampToValueAtTime(3400, now + 0.15);
+      osc1.frequency.linearRampToValueAtTime(2600, now + 1.2);
+      osc1.frequency.exponentialRampToValueAtTime(3200, now + 2.5);
+      osc1.frequency.linearRampToValueAtTime(700, now + duration);
+
+      osc2.type = 'square';
+      osc2.frequency.setValueAtTime(650, now);
+      osc2.frequency.exponentialRampToValueAtTime(2800, now + 0.18);
+      osc2.frequency.linearRampToValueAtTime(1900, now + 2.2);
+
+      // 2. White Noise giả lập tiếng gió gầm rú và tiếng cào xé
+      const bufferSize = audioCtx.sampleRate * duration;
+      const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const output = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        output[i] = Math.random() * 2 - 1;
+      }
+      const whiteNoise = audioCtx.createBufferSource();
+      whiteNoise.buffer = noiseBuffer;
+
+      // Bộ lọc tiếng hú rợn người
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(1800, now);
+      filter.Q.setValueAtTime(3, now);
+
+      const noiseGain = audioCtx.createGain();
+      noiseGain.gain.setValueAtTime(0.7, now);
+      noiseGain.gain.exponentialRampToValueAtTime(0.01, now + duration);
+
+      whiteNoise.connect(filter);
+      filter.connect(noiseGain);
+      noiseGain.connect(audioCtx.destination);
+
+      // Âm lượng thét to nhất có thể
+      gainNode.gain.setValueAtTime(1.0, now);
+      gainNode.gain.exponentialRampToValueAtTime(0.05, now + duration);
+
+      osc1.connect(gainNode);
+      osc2.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      osc1.start(now);
+      osc2.start(now);
+      whiteNoise.start(now);
+
+      osc1.stop(now + duration);
+      osc2.stop(now + duration);
+      whiteNoise.stop(now + duration);
+    }
+
+    // Rung điện thoại kịch liệt (Haptic Feedback)
+    function triggerIntenseVibration() {
+      if ("vibrate" in navigator) {
+        // Mô thức rung ngắt quãng liên tục như tim đập loạn xạ và chấn động
+        navigator.vibrate([300, 80, 400, 80, 600, 100, 800, 100, 1000]);
+      }
+    }
+
+    /* ==========================================================
+       LOGIC KÍCH HOẠT BẪY DỌA MA
+       ========================================================== */
+    const startBtn = document.getElementById('startBtn');
+    const imageArea = document.getElementById('imageArea');
+    const pBar = document.getElementById('pBar');
+    const statusLabel = document.getElementById('statusLabel');
+    const hintBadge = document.getElementById('hintBadge');
+
+    const stageBait = document.getElementById('stage-bait');
+    const stageScare = document.getElementById('stage-scare');
+    const stageRelief = document.getElementById('stage-relief');
+    const shareBtn = document.getElementById('shareBtn');
+    const toastCopy = document.getElementById('toastCopy');
+
+    let isTriggered = false;
+
+    // Kích hoạt khi bấm nút hoặc chạm vào ảnh để soi
+    function startTrap() {
+      if (isTriggered) return;
+      isTriggered = true;
+
+      // Mở khóa âm thanh trước (tránh bị iOS/Android chặn autoplay)
+      initAudio();
+
+      startBtn.style.display = 'none';
+      hintBadge.textContent = "Đang quét thị lực... Nhìn thật kỹ vào ảnh!";
+      statusLabel.textContent = "Đang phân tích độ tinh mắt (giữ mắt nhìn gần màn hình)...";
+
+      // Chạy tiến trình 4.5 giây (đủ để nạn nhân nheo mắt ghé sát mặt vào điện thoại)
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += 2.5;
+        pBar.style.width = progress + '%';
+
+        if (progress >= 100) {
+          clearInterval(interval);
+          triggerJumpscare();
+        }
+      }, 100);
+    }
+
+    startBtn.addEventListener('click', startTrap);
+    imageArea.addEventListener('click', startTrap);
+    imageArea.addEventListener('touchstart', startTrap, { passive: true });
+
+    // CAO TRÀO BÙM: DỌA MA THẦN SẦU!
+    function triggerJumpscare() {
+      // 1. Ẩn bài test, bật màn hình quỷ
+      stageBait.style.display = 'none';
+      stageScare.style.display = 'flex';
+      stageScare.classList.add('strobe-active');
+
+      // 2. Kích hoạt tiếng thét thấu xương & rung bần bật máy
+      playTerrifyingScream();
+      triggerIntenseVibration();
+
+      // 3. Sau đúng 3.5 giây: Dừng dọa, hiện màn hình meme hòa bình
+      setTimeout(() => {
+        stageScare.style.display = 'none';
+        stageScare.classList.remove('strobe-active');
+        if ("vibrate" in navigator) {
+          navigator.vibrate(0); // Tắt rung
+        }
+        stageRelief.style.display = 'flex';
+      }, 3500);
+    }
+
+    // Nút copy link để đi troll đứa khác
+    shareBtn.addEventListener('click', () => {
+      const currentUrl = window.location.href;
+      if (navigator.share) {
+        navigator.share({
+          title: "Bài test thị lực 10/10 siêu chuẩn",
+          text: "Ê vào test thử xem mắt mày tinh tới mức nào, tao tìm mãi mới ra điểm thứ 3 nè!",
+          url: currentUrl
+        }).catch(() => {});
+      } else if (navigator.clipboard) {
+        navigator.clipboard.writeText(currentUrl).then(() => {
+          toastCopy.classList.add('show');
+          setTimeout(() => toastCopy.classList.remove('show'), 3500);
+        });
+      } else {
+        alert("Copy link trang này gửi cho bạn bè nhé!");
+      }
+    });
+  </script>
+</body>
+</html>
